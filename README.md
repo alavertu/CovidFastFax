@@ -1,24 +1,17 @@
-## Covid Fast Fax
+## CovidReportReader
 
 This program will evaluate PDF files in the `TARGET_DIR`. Each page of the PDF will be checked against 
-the Contra Costa County CMR template and the California State CMR template. If the page matches the template
-it will be extracted and based on the checkboxes, placed into one of the following directories within `OUTPUT_DIR`:
+the 5 accepted templates. PDFs will then be placed into the output directory with names that indicate priority of the enclosed reports.
 
-* `high_priority` - Individual covid morbidity reports for workers in healthcare setting 
-* `congregate_settings` - Individual covid morbidity reports for workers in healthcare setting
-* `hp_and_cong` - Individual covid morbidity reports that meet both the `high_priority` and `congregate_settings` criteria
-* `uncertain` - For the Contra Costa Country Form, if the model thought both Yes and No boxes were checked for any of the above criteria, those reports are placed here.
-* `other` - Reports that don't meet any of the above criteria
+* `00_vulnerable_*` - PDF contains a case with an outbreak in a vulnerable population
+* `01_hcw_*` - PDF contains a case for a healthcare worker
+* `02_np_*` - PDF contains a covid morbidity report with no special priority
+* `NTD_*` - None of the templates were detected in this PDF, may still contain a case that the system missed
 
 ***NOTES***: 
-* Once initiated, the program will continue to monitor the `TARGET_DIR`, any new files that appear in the 
-directory will be processed as they arrive. 
 * Program currently only monitors for PDF files, based on file endings. This can easily be fixed if we have a broader 
-list of file formats we want to accept.
-* Model is tuned to avoid False Negatives, this results in a higher rate of False Positives. If this isn't desired 
-or the False Positive Rate is too high, I can adjust the prediction thresholds
-* Program takes a little while (>10s) to process each page of a PDF, as the image registration step takes a while. I'm currently looking at ways to speed this up.  
-* Currently can't handle upside-down reports, I'm working on a fix for this as well. 
+list of file formats we want to accept.  
+* On Windows Powershell make sure to disable QuickEdit mode, otherwise process may hang randomly. [Solution noted here](https://stackoverflow.com/questions/39676635/a-process-running-on-powershell-freezes-randomly/39676636#39676636) 
 
 ## Install steps  
 #### Built and tested with Python 3.6
@@ -47,7 +40,7 @@ https://pytorch.org/get-started/previous-versions/
 For OSX:
 > pip install torch==1.4.0 torchvision==0.5.0  
 
-For Linux Windows:  
+For Linux/Windows:  
 > pip install torch==1.4.0+cpu torchvision==0.5.0+cpu -f https://download.pytorch.org/whl/torch_stable.html  
   
 <br/>  
@@ -58,39 +51,44 @@ For Linux Windows:
 > pip install -r requirements.txt
 
 
-## To Run:
+## To Run with Recommended Settings:
 
 > cd CovidReportReader/code
 
-> python CovidReportReader.py -t <path_to_directory_with_faxes> -O <path_to_output_directory> 
+> python CovidReportReader.py -t <path_to_directory_with_faxes> -O <path_to_output_directory> -v -s
 
 ## To Test:
 > cd CovidReportReader/code
 
-> python CovidReportReader.py -t ../data/test_images/ -O ../test_out -v
+> python CovidReportReader.py -t ../data/test_images/ -O ../test_out -v -s 
 
-This should create a directory called `test_out` in the main directory, with the following folders:
-* `high_priority` - Individual covid morbidity reports for workers in healthcare setting 
-* `congregate_settings` - Individual covid morbidity reports for workers in healthcare setting
-* `hp_and_cong` - Individual covid morbidity reports that meet both the `high_priority` and `congregate_settings` criteria
-* `uncertain` - For the Contra Costa Country Form, if the model thought both Yes and No boxes were checked for any of the above criteria, those reports are placed here.
-* `other` - Reports that don't meet any of the above criteria
+This should create a directory called `test_out` in the main directory:
 
-The files in `../data/test_images/` should be sorted accurately, except for the files that have been rotated 180 degrees. 
-Still working on an accurate way to check and fix file orientation. These files will simply be skipped at the moment. 
 
-## 
+## Arguments
 
-CovidReportReader with basic checkbox prioritization  
+usage: CovidReportReader.py [-h] -t TARGET_DIR -O OUTPUT_DIR [-r] [-f] [-v]
+                            [-d] [-s] [-e]
 
-required arguments:  
-  -t TARGET_DIR, --target_dir TARGET_DIR, Target directory to monitor for new PDFs  
-  -O OUTPUT_DIR, --output_dir OUTPUT_DIR, Location to create output directory  
-                        
-optional arguments:  
-  -h, --help            show this help message and exit    
-  -r, --reset           Reset cache, will result in reprocessing of all files   
-                        in the target directory (Not yet implemented)  
-  -v, --verbose         Verbose mode  
+optional arguments:
+  -h, --help            show this help message and exit
+  -r, --reset           Reset cache, will result in reprocessing of all files
+                        in the target directory
+  -f, --forced_reset    Reformat target directory, use with extreme caution,
+                        -r flag must also be specified
+  -v, --verbose         Verbose mode
+  -d, --debug           Debugging mode
+  -s, --split_pdfs      Split PDFs if a CMR template is detected. Creates a
+                        new PDF for each detected PDF, if the evaluated PDF
+                        only contains CMR pages, plus or minus one page. Otherwise,
+                        won't split the PDF
+  -e, --email_alerts    Send email alerts by pinging the server in
+                        email_endpoint.json
+
+required arguments:
+  -t TARGET_DIR, --target_dir TARGET_DIR
+                        Target directory to monitor for new PDFs
+  -O OUTPUT_DIR, --output_dir OUTPUT_DIR
+                        Location to create output directory
 
 
