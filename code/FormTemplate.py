@@ -318,6 +318,7 @@ class FormTemplate(object):
             # This is a temporary patch, just to ignore poorly extracted checkboxes
             if relevant_box.shape[0] == 0 or relevant_box.shape[1] == 0:
                 relevant_box = np.ones((self.chk_buffer, self.chk_buffer))
+
             out_checkboxes.append(relevant_box)
 
         return out_checkboxes
