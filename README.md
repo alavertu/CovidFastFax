@@ -1,4 +1,4 @@
-## CovidReportReader
+## Covid Fast Fax
 
 This program will evaluate PDF files in the `TARGET_DIR`. Each page of the PDF will be checked against 
 the 5 accepted templates. PDFs will then be placed into the output directory with names that indicate priority of the enclosed reports.
@@ -17,7 +17,7 @@ list of file formats we want to accept.
 #### Built and tested with Python 3.6
 
 **1\. Clone the repo to desired location**
-> git clone https://github.com/alavertu/CovidReportReader.git
+> git clone https://github.com/alavertu/CovidFastFax.git
 
 **2\. Install Poppler**
 
@@ -47,27 +47,27 @@ For Linux/Windows:
 
 **4\. Install remaining python packages**
 
-> cd CovidReportReader
+> cd CovidFastFax
 > pip install -r requirements.txt
 
 
 ## To Run with Recommended Settings:
 
-> cd CovidReportReader/code
+> cd CovidFastFax/code
 
-> python CovidReportReader.py -t <path_to_directory_with_faxes> -O <path_to_output_directory> -v -s
+> python CovidFastFax.py -t <path_to_directory_with_faxes> -O <path_to_output_directory> -v -s
 
 ## To Test:
-> cd CovidReportReader/code
+> cd CovidFastFax/code
 
-> python CovidReportReader.py -t ../data/test_images/ -O ../test_out -v -s 
+> python CovidFastFax.py -t ../data/test_images/ -O ../test_out -v -s 
 
 This should create a directory called `test_out` in the main directory:
 
 
 ## Arguments
 
-usage: CovidReportReader.py [-h] -t TARGET_DIR -O OUTPUT_DIR [-r] [-f] [-v]
+usage: CovidFastFax.py [-h] -t TARGET_DIR -O OUTPUT_DIR [-r] [-f] [-v]
                             [-d] [-s] [-e]
 
 optional arguments:
