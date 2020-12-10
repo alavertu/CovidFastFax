@@ -197,9 +197,8 @@ class FormTemplate(object):
         pystack_reg1, pystack_reg2 = self.register_form_pystack(im_to_align)
 
         pystack_reg1_distance, pystack_reg1_score = self.check_template_match(pystack_reg1)
-        pystack_reg2_distance, pystack_reg2_score = self.check_template_match(pystack_reg2)
 
-        if pystack_reg1_score < threshold and pystack_reg2_score < threshold:
+        if pystack_reg1_score < threshold:
 
             ird_reg = self.register_form_ird(im_to_align, threshold=threshold/2)
             ird_reg_distance, ird_reg_score = self.check_template_match(ird_reg)
@@ -209,8 +208,6 @@ class FormTemplate(object):
             else:
                 return(None)
 
-        if pystack_reg2_score >= pystack_reg1_score:
-            return(pystack_reg2)
         else:
             return(pystack_reg1)
 
