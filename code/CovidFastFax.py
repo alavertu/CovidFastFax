@@ -648,7 +648,7 @@ Main
 """
 if __name__ == "__main__":
     options = parse_command_line()
-    CRR = CovidReportReader(
+    CRR = CovidFastFax(
         options.target_dir,
         options.output_dir,
         options.reset,
@@ -656,6 +656,6 @@ if __name__ == "__main__":
         options.verbose,
         options.debug,
         options.split_pdfs,
-        options.email_alerts,
+        options.email_pings,
     )
     CRR.monitor()
