@@ -220,10 +220,10 @@ class CovidFastFax(object):
         for file_path in sorted(to_process):
             if self.verbose:
                 print(f"Analyzing {os.path.basename(file_path)}...")
-            start = time.now()
+            start = time.time()
             self.process_pdf(file_path)
-            end = time.now()
-            time_elapsed += ((end - start)/60)
+            end = time.time()
+            time_elapsed = ((end - start)/60)
             self.email_ping(time_elapsed)
             self.processed.add(file_path)
             self.cache1.write(file_path + "\n")
