@@ -316,8 +316,8 @@ class FormTemplate(object):
             relevant_box = smaller_patch_2_search[xmi_out:xma_out,(ymi_out-shift_right):(yma_out-shift_right)]
 
             # This is a temporary patch, just to ignore poorly extracted checkboxes
-            # if relevant_box.shape[0] == 0 or relevant_box.shape[1] == 0:
-            #     relevant_box = np.zeros((self.chk_buffer, self.chk_buffer))
+            if relevant_box.shape[0] == 0 or relevant_box.shape[1] == 0:
+                relevant_box = np.ones((self.chk_buffer, self.chk_buffer))
             out_checkboxes.append(relevant_box)
 
         return out_checkboxes

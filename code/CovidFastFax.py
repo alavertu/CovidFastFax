@@ -201,6 +201,19 @@ class CovidFastFax(object):
                 template, prototyping=self.debug_mode
             )
 
+    def email_ping(self, time_elapsed):
+
+
+        self.email_time_tracker += time_elapsed
+
+        if self.email_time_tracker >= self.email_ping_rate:
+            if self.verbose:
+                print(f"Pinging email server: {self.email_server}")
+            _ = requests.get(
+                self.email_server
+            )
+            self.email_time_tracker = 0.0
+
     def monitor(self):
         if self.verbose:
             print(f"Monitoring {self.target_dir} ...")
@@ -211,7 +224,6 @@ class CovidFastFax(object):
             to_process = targ_files.difference(self.processed)
             self.process_file_list(to_process)
             time.sleep(60)
-            self.email_time_tracker += 1
             self.email_ping(1)
             if self.verbose:
                 print(f"Monitoring {self.target_dir} for new files...")
@@ -321,19 +333,6 @@ class CovidFastFax(object):
             pred_labels.append(temp_labels)
 
         return pred_labels
-
-    def email_ping(self, time_elapsed):
-
-
-        self.email_time_tracker += time_elapsed
-
-        if self.email_time_tracker >= self.email_ping_rate:
-            if self.verbose:
-                print(f"Pinging email server: {self.email_server}")
-            _ = requests.get(
-                self.email_server
-            )
-            self.email_time_elapsed = 0.0
 
     def verify_pred_label(self, pred_labels, og_im_stack, page_num):
         form_match = False
