@@ -73,15 +73,17 @@ class CovidFastFax(object):
         self.split_pdfs = split_pdfs
 
         self.email_out = email_alerts
+        self.email_ping_rate = 20
+        self.email_time_tracker = 0.0
         if self.verbose:
             print(f"email setting: {self.email_out}")
 
         self.email_server = json.load(open("./email_endpoint.json", "r"))['email_url']
         if self.email_out:
             if self.verbose:
-                print(f"Email alerts will ping: {self.email_server}")
+                print(f"Email pings will be sent to: {self.email_server}")
             if self.email_server == "INSERT_EMAIL_SERVER_URL_HERE":
-                print(f"ERROR: Have you setup the url endpoint for email alerts?")
+                print(f"ERROR: Have you setup the url endpoint for email pings?")
                 sys.exit()
 
         if self.verbose:
@@ -112,8 +114,6 @@ class CovidFastFax(object):
                 print(f"Found {len(self.processed)} files in the cache...")
             self.cache1 = open("./cache1.txt", "a+")
             self.cache2 = open("./cache2.txt", "a+")
-
-
 
         self.skipped = open("./skipped.txt", "a+")
 
@@ -211,7 +211,8 @@ class CovidFastFax(object):
             to_process = targ_files.difference(self.processed)
             self.process_file_list(to_process)
             time.sleep(60)
-            
+            self.email_time_tracker += 1
+            self.email_ping(1)
             if self.verbose:
                 print(f"Monitoring {self.target_dir} for new files...")
 
@@ -219,7 +220,11 @@ class CovidFastFax(object):
         for file_path in sorted(to_process):
             if self.verbose:
                 print(f"Analyzing {os.path.basename(file_path)}...")
+            start = time.now()
             self.process_pdf(file_path)
+            end = time.now()
+            time_elapsed += ((end - start)/60)
+            self.email_ping(time_elapsed)
             self.processed.add(file_path)
             self.cache1.write(file_path + "\n")
             self.cache2.write(file_path + "\n")
@@ -317,14 +322,17 @@ class CovidFastFax(object):
 
         return pred_labels
 
-    def email_ping(self, vulnerable_pop_hit, hcw_hit):
-        if self.email_out and (vulnerable_pop_hit | hcw_hit):
-            # Ping notification server
-            if self.verbose:
-                print(f"Pinging email server: {self.email_server}")
+    def email_ping(self, time_elapsed):
+        if self.verbose:
+            print(f"Pinging email server: {self.email_server}")
+
+        self.email_time_tracker += time_elapsed
+
+        if self.email_time_tracker >= self.email_ping_rate:
             _ = requests.get(
                 self.email_server
             )
+            self.email_time_elapsed = 0.0
 
     def verify_pred_label(self, pred_labels, og_im_stack, page_num):
         form_match = False
@@ -473,12 +481,12 @@ class CovidFastFax(object):
                             og_image_stack[(page_num - 1)], hcw_out, other_pages
                         )
                     else:
-                        temp_name = f"02_{f_baseroot}_{index+1}_of_{len(hit_form_info)}.pdf"
+                        temp_name = f"02_np_{f_baseroot}_{index+1}_of_{len(hit_form_info)}.pdf"
                     regular_out = os.path.join(self.output_dir, temp_name)
                     self.save_to_pdf(
                         og_image_stack[(page_num - 1)], regular_out, other_pages
                     )
-                    self.email_ping(vul_pop_status, hcw_status)
+
 
             elif self.split_pdfs and (
                 len(og_image_stack) == len(hit_form_info)
@@ -527,18 +535,28 @@ class CovidFastFax(object):
                         self.save_to_pdf(og_image_stack[page_num], hcw_out, other_pages)
 
                     else:
-                        temp_name = f"02_{f_baseroot}_{index+1}_of_{len(hit_form_info)}.pdf"
+                        temp_name = f"02_np_{f_baseroot}_{index+1}_of_{len(hit_form_info)}.pdf"
 
                     regular_out = os.path.join(self.output_dir, temp_name)
                     self.save_to_pdf(og_image_stack[page_num], regular_out, other_pages)
-                    self.email_ping(vul_pop_status, hcw_status)
+
             else:
                 if self.verbose:
                     print(f"{file_path} contained {len(hit_form_info)} reports...")
                 vul_pop_status = any([x[3] for x in hit_form_info])
                 hcw_status = any([x[2] for x in hit_form_info])
 
-                report_pages = "-".join([str(x[0] + 1) for x in hit_form_info])
+
+                report_pages = []
+                for page, pred, hcw, vul_pop in hit_form_info:
+                    if vul_pop:
+                        report_pages.append("v" + str(page + 1))
+                    elif hcw:
+                        report_pages.append("h" + str(page + 1))
+                    else:
+                        report_pages.append(str(page + 1))
+
+                report_pages = "-".join(report_pages)
 
                 if vul_pop_status:
                     temp_name = f"00_vulnerable_{f_baseroot}_{len(hit_form_info)}_samples_pgs_{report_pages}.pdf"
@@ -550,11 +568,11 @@ class CovidFastFax(object):
                     hcw_out = os.path.join(self.hcw_case_dir, temp_name)
                     shutil.copy(file_path, hcw_out)
                 else:
-                    temp_name = f"02_np_{f_baseroot}_{len(hit_form_info)}samples_pgs_{report_pages}.pdf"
+                    temp_name = f"02_np_{f_baseroot}_{len(hit_form_info)}_samples_pgs_{report_pages}.pdf"
 
                 shutil.copy(file_path, os.path.join(self.output_dir, temp_name))
 
-                self.email_ping(vul_pop_status, hcw_status)
+
 
 
 
@@ -617,8 +635,8 @@ def parse_command_line():
     )
     parser.add_argument(
         "-e",
-        "--email_alerts",
-        help="Send email alerts by pinging the server in email_endpoint.json",
+        "--email_pings",
+        help="Send still alive alerts by pinging the server in email_endpoint.json",
         action='store_true'
     )
     options = parser.parse_args()

@@ -336,9 +336,9 @@ class FormTemplate(object):
 
         imgs = prep_image_data(check_data, transform)
 
-        if self.prototyping:
-            proc_imgs = [x[0,:,:] for x in imgs]
-            grid_images(proc_imgs, num_cols=2)
+        # if self.prototyping:
+        #     proc_imgs = [x[0,:,:] for x in imgs]
+        #     grid_images(proc_imgs, num_cols=2)
 
         imgs = imgs.to(device, dtype=torch.float)
         preds = ens_model(imgs)
