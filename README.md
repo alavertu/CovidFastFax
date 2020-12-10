@@ -82,7 +82,7 @@ optional arguments:
                         new PDF for each detected PDF, if the evaluated PDF
                         only contains CMR pages, plus or minus one page. Otherwise,
                         won't split the PDF
-  -e, --email_alerts    Send email alerts by pinging the server in
+  -e, --email_pings    Send email staying alive pings by pinging the server in
                         email_endpoint.json
 
 required arguments:
