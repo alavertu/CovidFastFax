@@ -68,9 +68,10 @@ This should create a directory called `test_out` in the main directory:
 
 ## Arguments
 
+```
 usage: CovidFastFax.py [-h] -t TARGET_DIR -O OUTPUT_DIR [-r] [-f] [-v]
                             [-d] [-s] [-e]
-
+                            
 optional arguments:  
       -h, --help            show this help message and exit  
       -r, --reset           Reset cache, will result in reprocessing of all files  
@@ -91,7 +92,7 @@ required arguments:
                             Target directory to monitor for new PDFs  
       -O OUTPUT_DIR, --output_dir OUTPUT_DIR  
                             Location to create output directory  
-
+```  
 ## CMR template construction
 
 CMR template forms follow a standardized directory structure for import into the system. Each template directory contains a template image stored in PNG format. Two JSON files specifying the pixel locations of the relevant checkboxes for each priority group, vulnerable populations and healthcare workers are placed in the same directory. 
