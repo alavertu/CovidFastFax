@@ -54,11 +54,11 @@ class FormTemplate(object):
 
 
         self.high_pr_boxes = json.load(
-            open(glob(os.path.join(path_to_form_dir, "*_high_pr_prop.json"))[0], "r")
+            open(glob(os.path.join(path_to_form_dir, "*_hcw_coords.json"))[0], "r")
         )
         self.cong_boxes = json.load(
             open(
-                glob(os.path.join(path_to_form_dir, "*_cong_setting_coords.json"))[0],
+                glob(os.path.join(path_to_form_dir, "*_vulnerable_coords.json"))[0],
                 "r",
             )
         )
