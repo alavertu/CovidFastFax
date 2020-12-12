@@ -9,6 +9,7 @@ the 5 accepted templates. PDFs will then be placed into the output directory wit
 * `NTD_*` - None of the templates were detected in this PDF, may still contain a case that the system missed
 
 ***NOTES***: 
+* Program currently only supports 5 templates, see `data/references/` for examples of supported templates within template folders
 * Program currently only monitors for PDF files, based on file endings. This can easily be fixed if we have a broader 
 list of file formats we want to accept.  
 * On Windows Powershell make sure to disable QuickEdit mode, otherwise process may hang randomly. [Solution noted here](https://stackoverflow.com/questions/39676635/a-process-running-on-powershell-freezes-randomly/39676636#39676636) 
@@ -70,25 +71,41 @@ This should create a directory called `test_out` in the main directory:
 usage: CovidFastFax.py [-h] -t TARGET_DIR -O OUTPUT_DIR [-r] [-f] [-v]
                             [-d] [-s] [-e]
 
-optional arguments:
-  -h, --help            show this help message and exit
-  -r, --reset           Reset cache, will result in reprocessing of all files
-                        in the target directory
-  -f, --forced_reset    Reformat target directory, use with extreme caution,
-                        -r flag must also be specified
-  -v, --verbose         Verbose mode
-  -d, --debug           Debugging mode
-  -s, --split_pdfs      Split PDFs if a CMR template is detected. Creates a
-                        new PDF for each detected PDF, if the evaluated PDF
-                        only contains CMR pages, plus or minus one page. Otherwise,
-                        won't split the PDF
-  -e, --email_pings    Send email staying alive pings by pinging the server in
-                        email_endpoint.json
+optional arguments:  
+      -h, --help            show this help message and exit  
+      -r, --reset           Reset cache, will result in reprocessing of all files  
+                            in the target directory  
+      -f, --forced_reset    Reformat target directory, use with extreme caution,  
+                            -r flag must also be specified  
+      -v, --verbose         Verbose mode  
+      -d, --debug           Debugging mode  
+      -s, --split_pdfs      Split PDFs if a CMR template is detected. Creates a  
+                            new PDF for each detected PDF, if the evaluated PDF  
+                            only contains CMR pages, plus or minus one page. Otherwise,  
+                            won't split the PDF  
+      -e, --email_pings    Send email staying alive pings by pinging the server in  
+                            email_endpoint.json  
 
-required arguments:
-  -t TARGET_DIR, --target_dir TARGET_DIR
-                        Target directory to monitor for new PDFs
-  -O OUTPUT_DIR, --output_dir OUTPUT_DIR
-                        Location to create output directory
+required arguments:  
+      -t TARGET_DIR, --target_dir TARGET_DIR  
+                            Target directory to monitor for new PDFs  
+      -O OUTPUT_DIR, --output_dir OUTPUT_DIR  
+                            Location to create output directory  
 
+## CMR template construction
+
+CMR template forms follow a standardized directory structure for import into the system. Each template directory contains a template image stored in PNG format. Two JSON files specifying the pixel locations of the relevant checkboxes for each priority group, vulnerable populations and healthcare workers are placed in the same directory. 
+```bash
+├── CovidFastFax
+│   ├── data
+│   │   ├── references
+│   │   │   ├── template_name
+│   │   │   │   ├── template_name.png
+│   │   │   │   ├── template_name_vulnerable.json
+│   │   │   │   ├── template_name_hcw.json
+```
+
+The inclusion of a new template requires the manual mapping of the priority checkboxes to form pixel locations. In our experience this process takes less than an hour and often less than 15 minutes. We then retrain the form template classification model to detect this new template, as well as the previous template. Retraining the template classification model on a single Nvidia V100 GPU<sup>1</sup> takes a few hours and additional speed improvements could be made to this process. Overall, it is possible to set up a new template within a 24hr time period for fast deployment of the system to new forms. 
+
+<sup>1</sup>Can be trained on GPUs with lower amounts of GPU memory. 
 
