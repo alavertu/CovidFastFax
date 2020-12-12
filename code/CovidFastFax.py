@@ -205,16 +205,16 @@ class CovidFastFax(object):
 
     def email_ping(self, time_elapsed):
 
+        if self.email_out:
+            self.email_time_tracker += time_elapsed
 
-        self.email_time_tracker += time_elapsed
-
-        if self.email_time_tracker >= self.email_ping_rate:
-            if self.verbose:
-                print(f"Pinging email server: {self.email_server}")
-            _ = requests.get(
-                self.email_server
-            )
-            self.email_time_tracker = 0.0
+            if self.email_time_tracker >= self.email_ping_rate:
+                if self.verbose:
+                    print(f"Pinging email server: {self.email_server}")
+                _ = requests.get(
+                    self.email_server
+                )
+                self.email_time_tracker = 0.0
 
     def monitor(self):
         if self.verbose:
