@@ -102,11 +102,11 @@ CMR template forms follow a standardized directory structure for import into the
 │   │   ├── references
 │   │   │   ├── template_name
 │   │   │   │   ├── template_name.png
-│   │   │   │   ├── template_name_vulnerable.json
-│   │   │   │   ├── template_name_hcw.json
+│   │   │   │   ├── template_name_vulnerable_coords.json
+│   │   │   │   ├── template_name_hcw_coords.json
 ```
 
-The inclusion of a new template requires the manual mapping of the priority checkboxes to form pixel locations. In our experience this process takes less than an hour and often less than 15 minutes. We then retrain the form template classification model to detect this new template, as well as the previous template. Retraining the template classification model on a single Nvidia V100 GPU<sup>1</sup> takes a few hours and additional speed improvements could be made to this process. Overall, it is possible to set up a new template within a 24hr time period for fast deployment of the system to new forms. 
+The inclusion of a new template requires the manual mapping of the priority checkboxes to pixel locations in form template. In our experience this process takes less than an hour and often less than 15 minutes. We then retrain the form template classification model to detect this new template, as well as the previous template. Retraining the template classification model on a single Nvidia V100 GPU<sup>1</sup> takes a few hours and additional speed improvements could be made to this process. Overall, it is possible to set up a new template within a 24hr time period for fast deployment of the system to new forms. 
 
 <sup>1</sup>Can be trained on GPUs with lower amounts of GPU memory. 
 
