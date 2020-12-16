@@ -15,42 +15,34 @@ class CheckNet(nn.Module):
             nn.Conv2d(1, 4, kernel_size=3, stride=1, padding=1),
             nn.BatchNorm2d(4),
             nn.ReLU(),
-        )
+            nn.MaxPool2d(kernel_size=2, stride=2))
         self.layer2 = nn.Sequential(
             nn.Conv2d(4, 8, kernel_size=3, stride=1, padding=1),
             nn.BatchNorm2d(8),
             nn.ReLU(),
-        )
+            nn.MaxPool2d(kernel_size=2, stride=2))
         self.layer3 = nn.Sequential(
             nn.Conv2d(8, 16, kernel_size=3, stride=1, padding=1),
             nn.BatchNorm2d(16),
             nn.ReLU(),
-            nn.MaxPool2d(kernel_size=2, stride=2),
-        )
+            nn.MaxPool2d(kernel_size=2, stride=2))
         self.layer4 = nn.Sequential(
-            nn.Conv2d(16, 64, kernel_size=3, stride=1, padding=1),
-            nn.BatchNorm2d(64),
-            nn.ReLU(),
-            nn.MaxPool2d(kernel_size=2, stride=2),
-        )
-        self.layer5 = nn.Sequential(
-            nn.Conv2d(64, 64, kernel_size=3, stride=1, padding=1),
-            nn.BatchNorm2d(64),
-            nn.ReLU(),
-        )
-        self.dp1 = nn.Dropout(0.2)
-        self.fc = nn.Linear(9216, num_classes)
+            nn.Conv2d(16, 32, kernel_size=3, stride=1, padding=1),
+            nn.BatchNorm2d(32),
+            nn.ReLU())
+        self.dp1 = nn.Dropout(0.6)
+        self.dp2 = nn.Dropout(0.4)
+        self.fc = nn.Linear(1152, num_classes)
 
     def forward(self, x):
         out = self.layer1(x)
-        out = self.dp1(out)
+        #         out = self.dp1(out)
         out = self.layer2(out)
         #         out = self.dp1(out)
         out = self.layer3(out)
         out = self.dp1(out)
         out = self.layer4(out)
-        out = self.dp1(out)
-        #         out = self.layer5(out)
+        out = self.dp2(out)
         #         out = self.dp1(out)
         out = out.reshape(out.size(0), -1)
         out = self.fc(out)
