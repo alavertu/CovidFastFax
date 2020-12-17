@@ -480,6 +480,8 @@ class CovidFastFax(object):
                         self.save_to_pdf(
                             og_image_stack[(page_num - 1)], hcw_out, other_pages
                         )
+                    elif form_type == "cal_march_2020":
+                        temp_name = f"03_np_{f_baseroot}_{index + 1}_of_{len(hit_form_info)}.pdf"
                     else:
                         temp_name = f"02_np_{f_baseroot}_{index+1}_of_{len(hit_form_info)}.pdf"
                     regular_out = os.path.join(self.output_dir, temp_name)
@@ -533,7 +535,8 @@ class CovidFastFax(object):
                         temp_name = f"01_hcw_{f_baseroot}_{index+1}_of_{len(hit_form_info)}.pdf"
                         hcw_out = os.path.join(self.hcw_case_dir, temp_name)
                         self.save_to_pdf(og_image_stack[page_num], hcw_out, other_pages)
-
+                    elif form_type == "cal_march_2020":
+                        temp_name = f"03_np_{f_baseroot}_{index + 1}_of_{len(hit_form_info)}.pdf"
                     else:
                         temp_name = f"02_np_{f_baseroot}_{index+1}_of_{len(hit_form_info)}.pdf"
 
@@ -545,7 +548,7 @@ class CovidFastFax(object):
                     print(f"{file_path} contained {len(hit_form_info)} reports...")
                 vul_pop_status = any([x[3] for x in hit_form_info])
                 hcw_status = any([x[2] for x in hit_form_info])
-
+                cal_march = any([x[1] == "cal_march_2020" for x in hit_form_info])
 
                 report_pages = []
                 for page, pred, hcw, vul_pop in hit_form_info:
@@ -567,6 +570,8 @@ class CovidFastFax(object):
                     temp_name = f"01_hcw_{f_baseroot}_{len(hit_form_info)}_samples_pgs_{report_pages}.pdf"
                     hcw_out = os.path.join(self.hcw_case_dir, temp_name)
                     shutil.copy(file_path, hcw_out)
+                elif cal_march:
+                    temp_name = f"03_np_{f_baseroot}_{len(hit_form_info)}_samples_pgs_{report_pages}.pdf"
                 else:
                     temp_name = f"02_np_{f_baseroot}_{len(hit_form_info)}_samples_pgs_{report_pages}.pdf"
 
