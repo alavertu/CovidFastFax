@@ -16,11 +16,21 @@ list of file formats we want to accept.
 
 ## Install steps  
 #### Built and tested with Python 3.6
+**1\. Install Miniconda**  
+Install the correct Miniconda distribution following the instructions at this [link](https://docs.conda.io/en/latest/miniconda.html)  
+Then after install initialize conda:
+> conda init
 
-**1\. Clone the repo to desired location**
+Setup a new conda environment for the project:
+> conda create -n covRep python=3.6  
+
+Activate the new environment, (you'll need to do this each time you open a new terminal):
+> conda activate covRep
+
+**2\. Clone the repo to desired location**
 > git clone https://github.com/alavertu/CovidFastFax.git
 
-**2\. Install Poppler**
+**3\. Install Poppler**
 
 https://poppler.freedesktop.org/  
 > conda install -c conda-forge poppler  
@@ -34,7 +44,7 @@ If there's an issue, try using the following conda distribution instead:
     
 <br/>  
   
-**3\. Install CPU version of pytorch 4.1**
+**4\. Install CPU version of pytorch 4.1**
 
 https://pytorch.org/get-started/previous-versions/
 
@@ -46,9 +56,9 @@ For Linux/Windows:
   
 <br/>  
 
-**4\. Install remaining python packages**
+**5\. Install remaining python packages**
 
-> cd CovidFastFax
+> cd CovidFastFax  
 > pip install -r requirements.txt
 
 
