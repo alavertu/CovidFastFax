@@ -349,7 +349,7 @@ class FormTemplate(object):
             [
                 True if x else False
                 for j, x in enumerate(
-                    ((preds[:self.num_high_pr, :] >= opt_thres).sum(dim=1) >= 4).tolist()
+                    ((preds[:self.num_high_pr, :] >= opt_thres).sum(dim=1) >= 1).tolist()
                 )
             ]
         )
@@ -357,7 +357,7 @@ class FormTemplate(object):
             [
                 True if x else False
                 for j, x in enumerate(
-                    ((preds[self.num_high_pr:, :] >= opt_thres).sum(dim=1) >= 4).tolist()
+                    ((preds[self.num_high_pr:, :] >= opt_thres).sum(dim=1) >= 1).tolist()
                 )
             ]
         )
