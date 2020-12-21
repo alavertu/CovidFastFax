@@ -164,8 +164,10 @@ class CovidFastFax(object):
         )
 
         ### SETUP FOR CHECKBOX COMPONENT
-        check_mu = (0.024431580375383045,)
-        check_std = (0.2114881181764639,)
+        # check_mu = (0.024431580375383045,)
+        # check_std = (0.2114881181764639,)
+        check_mu = (0.010199239219432315,)
+        check_std = (0.23450328975030799,)
         self.chk_transf = transforms.Compose(
             [
                 transforms.ToPILImage(),
@@ -178,11 +180,11 @@ class CovidFastFax(object):
         # Need to update checkbox coordinates
 
         # Load models into ensemble predictor
-        model1 = load_model("../data/chkbox_models/chkbox_rnd7_0_bestVal.pt")
-        model2 = load_model("../data/chkbox_models/chkbox_rnd7_1_bestVal.pt")
-        model3 = load_model("../data/chkbox_models/chkbox_rnd7_2_bestVal.pt")
-        model4 = load_model("../data/chkbox_models/chkbox_rnd7_3_bestVal.pt")
-        model5 = load_model("../data/chkbox_models/chkbox_rnd7_4_bestVal.pt")
+        model1 = load_model("../data/chkbox_models/chkbox_rnd11_0_bestVal.pt")
+        model2 = load_model("../data/chkbox_models/chkbox_rnd11_1_bestVal.pt")
+        model3 = load_model("../data/chkbox_models/chkbox_rnd11_2_bestVal.pt")
+        model4 = load_model("../data/chkbox_models/chkbox_rnd11_3_bestVal.pt")
+        model5 = load_model("../data/chkbox_models/chkbox_rnd11_4_bestVal.pt")
 
         _ = model1.to(self.device)
         _ = model2.to(self.device)
@@ -203,16 +205,16 @@ class CovidFastFax(object):
 
     def email_ping(self, time_elapsed):
 
+        if self.email_out:
+            self.email_time_tracker += time_elapsed
 
-        self.email_time_tracker += time_elapsed
-
-        if self.email_time_tracker >= self.email_ping_rate:
-            if self.verbose:
-                print(f"Pinging email server: {self.email_server}")
-            _ = requests.get(
-                self.email_server
-            )
-            self.email_time_tracker = 0.0
+            if self.email_time_tracker >= self.email_ping_rate:
+                if self.verbose:
+                    print(f"Pinging email server: {self.email_server}")
+                _ = requests.get(
+                    self.email_server
+                )
+                self.email_time_tracker = 0.0
 
     def monitor(self):
         if self.verbose:
