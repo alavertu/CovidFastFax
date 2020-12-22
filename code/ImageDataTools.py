@@ -79,7 +79,7 @@ def prep_image_data(images, transforms):
             temp_im = 1.0 - k
             temp_im = temp_im.astype(np.float32)
             out_tensors.append(transforms(temp_im))
-    return(torch.stack(out_tensors))
+    return torch.stack(out_tensors)
 
 
 def load_mnist_data(labels_path, images_path):

@@ -34,6 +34,7 @@ from models import *
 
 from ProcessingUtils import check_directory, load_model
 
+
 class CovidFastFax(object):
     def __init__(
         self,
@@ -78,7 +79,7 @@ class CovidFastFax(object):
         if self.verbose:
             print(f"email setting: {self.email_out}")
 
-        self.email_server = json.load(open("./email_endpoint.json", "r"))['email_url']
+        self.email_server = json.load(open("./email_endpoint.json", "r"))["email_url"]
         if self.email_out:
             if self.verbose:
                 print(f"Email pings will be sent to: {self.email_server}")
@@ -211,9 +212,7 @@ class CovidFastFax(object):
             if self.email_time_tracker >= self.email_ping_rate:
                 if self.verbose:
                     print(f"Pinging email server: {self.email_server}")
-                _ = requests.get(
-                    self.email_server
-                )
+                _ = requests.get(self.email_server)
                 self.email_time_tracker = 0.0
 
     def monitor(self):
@@ -237,7 +236,7 @@ class CovidFastFax(object):
             start = time.time()
             self.process_pdf(file_path)
             end = time.time()
-            time_elapsed = ((end - start)/60)
+            time_elapsed = (end - start) / 60
             self.email_ping(time_elapsed)
             self.processed.add(file_path)
             self.cache1.write(file_path + "\n")
@@ -247,12 +246,10 @@ class CovidFastFax(object):
         reg_im = form_template.register_2_template(np.asarray(image_in))
         return reg_im
 
-    def get_form_registration(
-        self, image, temp_template
-    ):
+    def get_form_registration(self, image, temp_template):
         reg_im = temp_template.register_2_template(np.asarray(image))
 
-        return(reg_im)
+        return reg_im
 
     def save_to_pdf(self, base_image, out_path, other_pages=[]):
         if len(other_pages) > 0:
@@ -347,9 +344,7 @@ class CovidFastFax(object):
                 print("FATAL ERROR: Template not in known templates...")
                 exit()
 
-            reg_im = self.get_form_registration(
-                og_im_stack[page_num], temp_template
-            )
+            reg_im = self.get_form_registration(og_im_stack[page_num], temp_template)
 
             if reg_im is not None:
                 # _ = plt.imshow(1.0-reg_im, cmap='Greys', vmin=0, vmax=1)
@@ -396,7 +391,9 @@ class CovidFastFax(object):
 
                 if self.debug_mode:
                     if reg_im is not None:
-                        reg_distance, reg_score = temp_template.check_template_match(reg_im)
+                        reg_distance, reg_score = temp_template.check_template_match(
+                            reg_im
+                        )
                         # print(reg_score)
                         self.outdebug_mode.write(f"{pred},{reg_score},{k}\n")
                     # _ = skimage.io.imsave(os.path.join(self.debug_mode_dir, f'{f_baseroot}_regIm.png'), reg_im)
@@ -451,7 +448,6 @@ class CovidFastFax(object):
                     vul_pop_status,
                 ) in enumerate(hit_form_info):
 
-
                     other_pages = []
 
                     # Add report page and the additional other pages in proper order
@@ -477,7 +473,9 @@ class CovidFastFax(object):
                             og_image_stack[(page_num - 1)], cong_out, other_pages
                         )
                     elif hcw_status:
-                        temp_name = f"01_hcw_{f_baseroot}_{index+1}_of_{len(hit_form_info)}.pdf"
+                        temp_name = (
+                            f"01_hcw_{f_baseroot}_{index+1}_of_{len(hit_form_info)}.pdf"
+                        )
                         hcw_out = os.path.join(self.hcw_case_dir, temp_name)
                         self.save_to_pdf(
                             og_image_stack[(page_num - 1)], hcw_out, other_pages
@@ -485,12 +483,13 @@ class CovidFastFax(object):
                     elif form_type == "cal_march_2020":
                         temp_name = f"03_np_{f_baseroot}_{index + 1}_of_{len(hit_form_info)}.pdf"
                     else:
-                        temp_name = f"02_np_{f_baseroot}_{index+1}_of_{len(hit_form_info)}.pdf"
+                        temp_name = (
+                            f"02_np_{f_baseroot}_{index+1}_of_{len(hit_form_info)}.pdf"
+                        )
                     regular_out = os.path.join(self.output_dir, temp_name)
                     self.save_to_pdf(
                         og_image_stack[(page_num - 1)], regular_out, other_pages
                     )
-
 
             elif self.split_pdfs and (
                 len(og_image_stack) == len(hit_form_info)
@@ -511,7 +510,6 @@ class CovidFastFax(object):
                 ) in enumerate(hit_form_info):
                     if self.debug_mode:
                         print(page_num, form_type, hcw_status, vul_pop_status)
-
 
                     other_pages = []
 
@@ -534,13 +532,17 @@ class CovidFastFax(object):
                             og_image_stack[page_num], cong_out, other_pages
                         )
                     elif hcw_status:
-                        temp_name = f"01_hcw_{f_baseroot}_{index+1}_of_{len(hit_form_info)}.pdf"
+                        temp_name = (
+                            f"01_hcw_{f_baseroot}_{index+1}_of_{len(hit_form_info)}.pdf"
+                        )
                         hcw_out = os.path.join(self.hcw_case_dir, temp_name)
                         self.save_to_pdf(og_image_stack[page_num], hcw_out, other_pages)
                     elif form_type == "cal_march_2020":
                         temp_name = f"03_np_{f_baseroot}_{index + 1}_of_{len(hit_form_info)}.pdf"
                     else:
-                        temp_name = f"02_np_{f_baseroot}_{index+1}_of_{len(hit_form_info)}.pdf"
+                        temp_name = (
+                            f"02_np_{f_baseroot}_{index+1}_of_{len(hit_form_info)}.pdf"
+                        )
 
                     regular_out = os.path.join(self.output_dir, temp_name)
                     self.save_to_pdf(og_image_stack[page_num], regular_out, other_pages)
@@ -579,10 +581,6 @@ class CovidFastFax(object):
 
                 shutil.copy(file_path, os.path.join(self.output_dir, temp_name))
 
-
-
-
-
     def process_pdf(self, file_path):
         f_baseroot = os.path.basename(file_path).split(".")[0]
         og_im_stack, proc_im_stack = self.create_image_stacks(file_path, f_baseroot)
@@ -599,7 +597,7 @@ Parse the command line
 
 def parse_command_line():
     parser = argparse.ArgumentParser(
-        description="CovidReportReader with basic checkbox prioritization"
+        description="Covid Fast Fax with basic checkbox prioritization"
     )
     requiredNamed = parser.add_argument_group("required arguments")
     requiredNamed.add_argument(
@@ -644,7 +642,7 @@ def parse_command_line():
         "-e",
         "--email_pings",
         help="Send still alive alerts by pinging the server in email_endpoint.json",
-        action='store_true'
+        action="store_true",
     )
     options = parser.parse_args()
     return options
