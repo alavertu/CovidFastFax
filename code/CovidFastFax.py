@@ -39,7 +39,7 @@ class CovidFastFax(object):
         self,
         target_dir,
         output_dir,
-        model_module = None,
+        model_module=None,
         reset=False,
         forced_reset=False,
         verbose=False,
@@ -127,7 +127,7 @@ class CovidFastFax(object):
         self.template_classifiers.append(self.load_template_model("../data/form_model/base_models/formDet_best.pt"))
         self.template_classifiers.append(self.load_template_model("../data/form_model/base_models/formDet_best3.pt"))
 
-        if model_module:
+        if model_module is not None:
             for model_path in glob(os.path.join(model_module, "*.pt")):
                 self.template_classifiers.append(self.load_template_model(model_path))
 
@@ -181,7 +181,8 @@ class CovidFastFax(object):
             )
 
     def load_template_model(self, path_2_model):
-        template_model = TemplateNet(num_classes=6)
+        model_pred_key = {int(k):v for k,v in json.load(open(os.path.join(os.path.dirname(path_2_model), "model_pred_key.json"))).items()}
+        template_model = TemplateNet(num_classes=len(model_pred_key))
         template_model.load_state_dict(
             torch.load(
                 path_2_model, map_location=torch.device("cpu")
@@ -189,7 +190,6 @@ class CovidFastFax(object):
         )
         _ = template_model.to(self.device)
         _ = template_model.eval()
-        model_pred_key = json.load(open(os.path.join(os.path.dirname(path_2_model), "model_key_pred.json")))
         return([template_model, model_pred_key])
 
     def email_ping(self, time_elapsed):
@@ -227,6 +227,8 @@ class CovidFastFax(object):
             self.process_pdf(file_path)
             end = time.time()
             time_elapsed = ((end - start)/60)
+            if self.verbose:
+                print(f"Processing time: {round(time_elapsed*60, 2)} seconds")
             self.email_ping(time_elapsed)
             self.processed.add(file_path)
             self.cache1.write(file_path + "\n")
@@ -300,20 +302,19 @@ class CovidFastFax(object):
         proc_im_stack = torch.stack(proc_im_stack)
         proc_im_stack = proc_im_stack.to(self.device)
 
-        pred_labels = set()
+        pred_labels = [set() for _ in range(proc_im_stack.shape[0])]
         for k, (model, pred_key) in enumerate(self.template_classifiers):
             form_type_preds = model(proc_im_stack)
             sf_preds = torch.nn.functional.softmax(form_type_preds, dim=1)
-            pred_labels = []
             for j in range(sf_preds.shape[0]):
                 temp_labels = {
                     pred_key.get(x)
                     for x in np.where(sf_preds[j, :] > 0.5)[0]
                     if x != 0
                 }
+                pred_labels[j].update(temp_labels)
                 if self.debug_mode:
                     print(f"Model {k}: ", [round(x.item(), 2) for x in sf_preds[j, :]])
-            pred_labels.update(temp_labels)
 
         return pred_labels
 
@@ -325,6 +326,8 @@ class CovidFastFax(object):
 
             temp_template = self.templates.get(pred)
             if temp_template is None:
+                print(self.templates)
+                print(pred)
                 print("FATAL ERROR: Template not in known templates...")
                 exit()
 
@@ -595,8 +598,7 @@ def parse_command_line():
     parser.add_argument(
         "-m",
         "--model_module",
-        help="Additional template detection model, for expanding to new templates",
-        action='store_true'
+        help="Path to directory containing additional template detection models (for expanding to new templates)"
     )
     parser.add_argument(
         "-r",
@@ -645,6 +647,7 @@ if __name__ == "__main__":
     CRR = CovidFastFax(
         options.target_dir,
         options.output_dir,
+        options.model_module,
         options.reset,
         options.forced_reset,
         options.verbose,
