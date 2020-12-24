@@ -5,7 +5,8 @@ the 5 accepted templates. PDFs will then be placed into the output directory wit
 
 * `00_vulnerable_*` - PDF contains a case with an outbreak in a vulnerable population
 * `01_hcw_*` - PDF contains a case for a healthcare worker
-* `02_np_*` - PDF contains a covid morbidity report with no special priority
+* `02_np_*` - PDF contains a covid confidential morbidity report with no special priority
+* `03_np_*` - PDF contains a confidential morbidity report with a pre-covid template and no special priority
 * `NTD_*` - None of the templates were detected in this PDF, may still contain a case that the system missed
 
 ***NOTES***: 
