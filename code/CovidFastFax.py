@@ -219,7 +219,7 @@ class CovidFastFax(object):
                 print(f"Monitoring {self.target_dir} for new files...")
 
     def process_file_list(self, to_process):
-        for file_path in sorted(to_process):
+        for file_path in to_process:
             if self.verbose:
                 print(f"Analyzing {os.path.basename(file_path)}...")
             start = time.time()
