@@ -257,12 +257,13 @@ class CovidFastFax(object):
             _ = base_image.save(out_path, "PDF", resolution=100.0, save_all=True)
 
     def get_report_priority(self, temp_im, form_template):
+        if form_template.num_high_pr == 0 or form_template.num_cong_boxes == 0:
+            hcw, vul_pop, unc = False, False, False
 
-        hcw, vul_pop, unc = form_template.process_chkboxes(
-            self.device, self.chk_transf, self.ens_model, temp_im
-        )
-
-        # hp_simple, cs_simple, unc_simple = form_template.process_chkboxes_basic(temp_im)
+        else:
+            hcw, vul_pop, unc = form_template.process_chkboxes(
+                self.device, self.chk_transf, self.ens_model, temp_im
+            )
 
         return [hcw, vul_pop, unc]
 
