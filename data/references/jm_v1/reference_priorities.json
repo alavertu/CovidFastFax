@@ -1,0 +1,1 @@
+{"00_vulnerable": {"checkbox_coords_file": "jm_v1_vulnerable_coords.json", "baseline_name": false}, "01_healthcare_worker": {"checkbox_coords_file": "jm_v1_hcw_coords.json", "baseline_name": false}, "02_np": {"baseline_name": true}}

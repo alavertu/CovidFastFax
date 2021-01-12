@@ -1,0 +1,1 @@
+{"00_vulnerable": {"checkbox_coords_file": "scc_october_2020_vulnerable_coords.json", "baseline_name": false}, "01_deathNotice": {"checkbox_coords_file": "scc_october_2020_death_notice_coords.json", "baseline_name": false}, "02_np": {"baseline_name": true}}
