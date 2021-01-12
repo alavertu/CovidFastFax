@@ -245,15 +245,13 @@ class CovidFastFax(object):
             _ = base_image.save(out_path, "PDF", resolution=100.0, save_all=True)
 
     def get_report_priority(self, temp_im, form_template):
-        if form_template.num_high_pr == 0 or form_template.num_cong_boxes == 0:
-            hcw, vul_pop, unc = False, False, False
-
-        else:
-            hcw, vul_pop, unc = form_template.process_chkboxes(
+        if len(form_template.template_checkboxes) > 0:
+            checkbox_preds = form_template.process_chkboxes(
                 self.device, self.chk_transf, self.ens_model, temp_im
             )
-
-        return [hcw, vul_pop, unc]
+            return np.array(checkbox_preds)
+        else:
+            return np.array(list())
 
     def create_image_stacks(self, file_path, f_baseroot):
         og_im_stack = []
@@ -441,7 +439,7 @@ class CovidFastFax(object):
                         other_pages.append(og_image_stack[-1])
 
                     if any(checkbox_status >= 1):
-                        check_hit_index = np.argmax(np.array(checkbox_status) >= 1)
+                        check_hit_index = np.argmax(checkbox_status >= 1)
                         temp_name = f"{self.templates[form_type].checkbox_labels[check_hit_index]}_{f_baseroot}_{index+1}_of_{len(hit_form_info)}.pdf"
                     else:
                         temp_name = (
@@ -486,7 +484,7 @@ class CovidFastFax(object):
                         other_pages.append(og_image_stack[-1])
 
                     if any(checkbox_status >= 1):
-                        check_hit_index = np.argmax(np.array(checkbox_status) >= 1)
+                        check_hit_index = np.argmax(checkbox_status >= 1)
                         temp_name = f"{self.templates[form_type].checkbox_labels[check_hit_index]}_{f_baseroot}_{index+1}_of_{len(hit_form_info)}.pdf"
 
                     else:
@@ -506,13 +504,13 @@ class CovidFastFax(object):
                 prefixes = []
                 for page, form_type, checkbox_status in hit_form_info:
                     if any(checkbox_status >= 1):
-                        check_hit_index = np.argmax(np.array(checkbox_status) >= 1)
+                        check_hit_index = np.argmax(checkbox_status >= 1)
 
                         # Use first letter of output name as page prefix
                         prefix = self.templates[form_type].checkbox_labels[check_hit_index]
                         prefixes.append(self.templates[form_type].checkbox_labels[check_hit_index])
 
-                        p_label = prefix.split("_")[0]
+                        p_label = prefix.split("_")[1][0]
                         report_pages.append(p_label + str(page + 1))
                     else:
                         prefixes.append(self.templates[form_type].baseline_name)
