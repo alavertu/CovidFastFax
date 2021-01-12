@@ -5,28 +5,16 @@ Stanford University
 """
 
 import argparse
-import os
 import requests
-from glob import glob
 import time
 import shutil
 import warnings
-import json
 import sys
 
 warnings.simplefilter(action="ignore", category=FutureWarning)
 
-import numpy as np
-
 from skimage import img_as_float32
-from skimage.color import rgb2gray
 from pdf2image import convert_from_path
-
-import torch
-
-from torchvision import transforms
-
-from ImageDataTools import *
 
 from FormTemplate import *
 
@@ -391,9 +379,9 @@ class CovidFastFax(object):
 
                     start_page = k
 
-                    hcw, vul_pop, unc = self.get_report_priority(reg_im, temp_template)
+                    checkbox_preds = self.get_report_priority(reg_im, temp_template)
 
-                    hit_form_tracker.append([start_page, pred, hcw, vul_pop])
+                    hit_form_tracker.append([start_page, pred, checkbox_preds])
 
         return hit_form_tracker
 
@@ -431,8 +419,7 @@ class CovidFastFax(object):
                 for index, (
                     page_num,
                     form_type,
-                    hcw_status,
-                    vul_pop_status,
+                    checkbox_status
                 ) in enumerate(hit_form_info):
 
                     other_pages = []
@@ -453,25 +440,12 @@ class CovidFastFax(object):
                     ):
                         other_pages.append(og_image_stack[-1])
 
-                    if vul_pop_status:
-                        temp_name = f"00_vulnerable_{f_baseroot}_{index+1}_of_{len(hit_form_info)}.pdf"
-                        cong_out = os.path.join(self.cong_setting_dir, temp_name)
-                        self.save_to_pdf(
-                            og_image_stack[(page_num - 1)], cong_out, other_pages
-                        )
-                    elif hcw_status:
-                        temp_name = (
-                            f"01_hcw_{f_baseroot}_{index+1}_of_{len(hit_form_info)}.pdf"
-                        )
-                        hcw_out = os.path.join(self.hcw_case_dir, temp_name)
-                        self.save_to_pdf(
-                            og_image_stack[(page_num - 1)], hcw_out, other_pages
-                        )
-                    elif form_type == "cal_march_2020":
-                        temp_name = f"03_np_{f_baseroot}_{index + 1}_of_{len(hit_form_info)}.pdf"
+                    if any(checkbox_status >= 1):
+                        check_hit_index = np.argmax(np.array(checkbox_status) >= 1)
+                        temp_name = f"{self.templates[form_type].checkbox_labels[check_hit_index]}_{f_baseroot}_{index+1}_of_{len(hit_form_info)}.pdf"
                     else:
                         temp_name = (
-                            f"02_np_{f_baseroot}_{index+1}_of_{len(hit_form_info)}.pdf"
+                            f"{self.templates[form_type].baseline_name}_{f_baseroot}_{index+1}_of_{len(hit_form_info)}.pdf"
                         )
                     regular_out = os.path.join(self.output_dir, temp_name)
                     self.save_to_pdf(
@@ -492,11 +466,10 @@ class CovidFastFax(object):
                 for index, (
                     page_num,
                     form_type,
-                    hcw_status,
-                    vul_pop_status,
+                    checkbox_status
                 ) in enumerate(hit_form_info):
                     if self.debug_mode:
-                        print(page_num, form_type, hcw_status, vul_pop_status)
+                        print(page_num, form_type, checkbox_status)
 
                     other_pages = []
 
@@ -512,23 +485,13 @@ class CovidFastFax(object):
                     ):
                         other_pages.append(og_image_stack[-1])
 
-                    if vul_pop_status:
-                        temp_name = f"00_vulnerable_{f_baseroot}_{index+1}_of_{len(hit_form_info)}.pdf"
-                        cong_out = os.path.join(self.cong_setting_dir, temp_name)
-                        self.save_to_pdf(
-                            og_image_stack[page_num], cong_out, other_pages
-                        )
-                    elif hcw_status:
-                        temp_name = (
-                            f"01_hcw_{f_baseroot}_{index+1}_of_{len(hit_form_info)}.pdf"
-                        )
-                        hcw_out = os.path.join(self.hcw_case_dir, temp_name)
-                        self.save_to_pdf(og_image_stack[page_num], hcw_out, other_pages)
-                    elif form_type == "cal_march_2020":
-                        temp_name = f"03_np_{f_baseroot}_{index + 1}_of_{len(hit_form_info)}.pdf"
+                    if any(checkbox_status >= 1):
+                        check_hit_index = np.argmax(np.array(checkbox_status) >= 1)
+                        temp_name = f"{self.templates[form_type].checkbox_labels[check_hit_index]}_{f_baseroot}_{index+1}_of_{len(hit_form_info)}.pdf"
+
                     else:
                         temp_name = (
-                            f"02_np_{f_baseroot}_{index+1}_of_{len(hit_form_info)}.pdf"
+                            f"{self.templates[form_type].baseline_name}_{f_baseroot}_{index+1}_of_{len(hit_form_info)}.pdf"
                         )
 
                     regular_out = os.path.join(self.output_dir, temp_name)
@@ -537,34 +500,28 @@ class CovidFastFax(object):
             else:
                 if self.verbose:
                     print(f"{file_path} contained {len(hit_form_info)} reports...")
-                vul_pop_status = any([x[3] for x in hit_form_info])
-                hcw_status = any([x[2] for x in hit_form_info])
-                cal_march = any([x[1] == "cal_march_2020" for x in hit_form_info])
+                # Assign page specific labels
 
                 report_pages = []
-                for page, pred, hcw, vul_pop in hit_form_info:
-                    if vul_pop:
-                        report_pages.append("v" + str(page + 1))
-                    elif hcw:
-                        report_pages.append("h" + str(page + 1))
+                prefixes = []
+                for page, form_type, checkbox_status in hit_form_info:
+                    if any(checkbox_status >= 1):
+                        check_hit_index = np.argmax(np.array(checkbox_status) >= 1)
+
+                        # Use first letter of output name as page prefix
+                        prefix = self.templates[form_type].checkbox_labels[check_hit_index]
+                        prefixes.append(self.templates[form_type].checkbox_labels[check_hit_index])
+
+                        p_label = prefix.split("_")[0]
+                        report_pages.append(p_label + str(page + 1))
                     else:
+                        prefixes.append(self.templates[form_type].baseline_name)
                         report_pages.append(str(page + 1))
 
                 report_pages = "-".join(report_pages)
 
-                if vul_pop_status:
-                    temp_name = f"00_vulnerable_{f_baseroot}_{len(hit_form_info)}_samples_pgs_{report_pages}.pdf"
-                    cong_out = os.path.join(self.cong_setting_dir, temp_name)
-                    shutil.copy(file_path, cong_out)
-
-                elif hcw_status:
-                    temp_name = f"01_hcw_{f_baseroot}_{len(hit_form_info)}_samples_pgs_{report_pages}.pdf"
-                    hcw_out = os.path.join(self.hcw_case_dir, temp_name)
-                    shutil.copy(file_path, hcw_out)
-                elif cal_march:
-                    temp_name = f"03_np_{f_baseroot}_{len(hit_form_info)}_samples_pgs_{report_pages}.pdf"
-                else:
-                    temp_name = f"02_np_{f_baseroot}_{len(hit_form_info)}_samples_pgs_{report_pages}.pdf"
+                highest_pr_prefix = sorted(prefixes)[0]
+                temp_name = f"{highest_pr_prefix}_{f_baseroot}_{len(hit_form_info)}_samples_pgs_{report_pages}.pdf"
 
                 shutil.copy(file_path, os.path.join(self.output_dir, temp_name))
 

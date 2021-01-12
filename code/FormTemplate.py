@@ -50,22 +50,43 @@ class FormTemplate(object):
             self.gray_template > threshold_otsu(self.gray_template)
         ] = 1.0
 
-        self.high_pr_boxes = json.load(
-            open(glob(os.path.join(path_to_form_dir, "*_hcw_coords.json"))[0], "r")
+        output_spec = json.load(
+            open(glob(os.path.join(path_to_form_dir, "reference_priorities.json"))[0], "r")
         )
-        self.cong_boxes = json.load(
-            open(
-                glob(os.path.join(path_to_form_dir, "*_vulnerable_coords.json"))[0],
-                "r",
-            )
-        )
-        one_box = list(self.high_pr_boxes.values())[0]
-        self.chk_buffer = (one_box[1] - one_box[0]) // 2
 
-        self.num_high_pr = len(self.high_pr_boxes)
-        self.num_cong_boxes = len(self.cong_boxes)
+        # Arrange prefixes in order of priority
+        output_spec = sorted([(k, v) for k, v in output_spec.items()])
 
-        self.template_checkboxes = self.get_form_checkboxes(self.gray_template)
+        self.output_specs = list()
+        self.checkbox_labels = dict()
+
+        checkboxes_not_defined = True
+
+        for prefix, rules in output_spec:
+            if rules['checkbox_coords_file']:
+                checkbox_coords = self.json.load(open(rules['checkbox_coords_file'], "r"))
+
+                # Assign checkbox indices to prefix labels
+                start_index = len(self.checkbox_labels)
+                for _ in checkbox_coords:
+                    self.checkbox_labels[start_index] = prefix
+                    start_index += 1
+
+                if checkboxes_not_defined:
+                    one_box = list(checkbox_coords.values())[0]
+                    self.chk_buffer = (one_box[1] - one_box[0]) // 2
+                    checkboxes_not_defined = False
+            else:
+                checkbox_coords = None
+
+            # If this form has an associated prefix, set that here
+            if rules['baseline_name']:
+                self.baseline_name = prefix
+
+            self.output_specs.append([prefix, checkbox_coords])
+
+        if not checkboxes_not_defined:
+            self.template_checkboxes = self.get_form_checkboxes(self.gray_template)
 
         self.sr1 = StackReg(StackReg.SCALED_ROTATION)
         self.sr2 = StackReg(StackReg.AFFINE)
@@ -225,61 +246,34 @@ class FormTemplate(object):
         context_buffer = int(np.min(reg_im.shape) * context_buffer_percentage)
         context_buffer2 = context_buffer // 8
         context_buffer3 = self.chk_buffer
+        for prefix, checkboxes in self.output_specs:
+            if checkboxes:
+                for xmi, xma, ymi, yma in checkboxes.values():
+                    buff_xmi, buff_xma, buff_ymi, buff_yma = self.get_safe_coord_shift(
+                        reg_im, context_buffer, xmi, xma, ymi, yma
+                    )
+                    bigger_self = reg_im[buff_xmi:buff_xma, buff_ymi:buff_yma]
 
-        for xmi, xma, ymi, yma in self.high_pr_boxes.values():
-            buff_xmi, buff_xma, buff_ymi, buff_yma = self.get_safe_coord_shift(
-                reg_im, context_buffer, xmi, xma, ymi, yma
-            )
-            bigger_self = reg_im[buff_xmi:buff_xma, buff_ymi:buff_yma]
+                    buff2_xmi, buff2_xma, _, _ = self.get_safe_coord_shift(
+                        reg_im, context_buffer3, xmi, xma, ymi, yma
+                    )
+                    _, _, buff2_ymi, buff2_yma = self.get_safe_coord_shift(
+                        reg_im,
+                        context_buffer2,
+                        xmi,
+                        xma,
+                        (ymi + shift_right),
+                        (yma + shift_right),
+                    )
+                    smaller_template = reg_im[buff2_xmi:buff2_xma, buff2_ymi:buff2_yma]
 
-            buff2_xmi, buff2_xma, _, _ = self.get_safe_coord_shift(
-                reg_im, context_buffer3, xmi, xma, ymi, yma
-            )
-            _, _, buff2_ymi, buff2_yma = self.get_safe_coord_shift(
-                reg_im,
-                context_buffer2,
-                xmi,
-                xma,
-                (ymi + shift_right),
-                (yma + shift_right),
-            )
-            smaller_template = reg_im[buff2_xmi:buff2_xma, buff2_ymi:buff2_yma]
+                    smaller_template2 = reg_im[
+                        xmi:xma, (ymi + shift_right) : (yma + shift_right)
+                    ]
 
-            smaller_template2 = reg_im[
-                xmi:xma, (ymi + shift_right) : (yma + shift_right)
-            ]
-
-            out_checkboxes.append(
-                [xmi, xma, ymi, yma, bigger_self, smaller_template, smaller_template2]
-            )
-
-        for xmi, xma, ymi, yma in self.cong_boxes.values():
-            buff_xmi, buff_xma, buff_ymi, buff_yma = self.get_safe_coord_shift(
-                reg_im, context_buffer, xmi, xma, ymi, yma
-            )
-            bigger_self = reg_im[buff_xmi:buff_xma, buff_ymi:buff_yma]
-
-            buff2_xmi, buff2_xma, _, _ = self.get_safe_coord_shift(
-                reg_im, context_buffer3, xmi, xma, ymi, yma
-            )
-            _, _, buff2_ymi, buff2_yma = self.get_safe_coord_shift(
-                reg_im,
-                context_buffer2,
-                xmi,
-                xma,
-                (ymi + shift_right),
-                (yma + shift_right),
-            )
-
-            smaller_template = reg_im[buff2_xmi:buff2_xma, buff2_ymi:buff2_yma]
-
-            smaller_template2 = reg_im[
-                xmi:xma, (ymi + shift_right) : (yma + shift_right)
-            ]
-
-            out_checkboxes.append(
-                [xmi, xma, ymi, yma, bigger_self, smaller_template, smaller_template2]
-            )
+                    out_checkboxes.append(
+                        [xmi, xma, ymi, yma, bigger_self, smaller_template, smaller_template2]
+                    )
 
         return out_checkboxes
 
@@ -367,9 +361,6 @@ class FormTemplate(object):
         return out_checkboxes
 
     def process_chkboxes(self, device, transform, ens_model, reg_im, opt_thres=0.5):
-        hp = False
-        cs = False
-        unc = False
 
         check_data = self.search_for_form_checkboxes(reg_im)
         # print('max, min pixel value after extraction:', np.max(check_data[0]), np.min(check_data[0]))
@@ -387,27 +378,6 @@ class FormTemplate(object):
         if self.prototyping:
             print(np.around(preds.detach().numpy(), decimals=2))
 
-        hp = any(
-            [
-                True if x else False
-                for j, x in enumerate(
-                    (
-                        (preds[: self.num_high_pr, :] >= opt_thres).sum(dim=1) >= 1
-                    ).tolist()
-                )
-            ]
-        )
-        cs = any(
-            [
-                True if x else False
-                for j, x in enumerate(
-                    (
-                        (preds[self.num_high_pr :, :] >= opt_thres).sum(dim=1) >= 1
-                    ).tolist()
-                )
-            ]
-        )
+        binary_preds_count = ((preds >= opt_thres).sum(dim=1) >= 1).tolist()
 
-        if self.prototyping:
-            print(hp, cs)
-        return [hp, cs, unc]
+        return(binary_preds_count)
