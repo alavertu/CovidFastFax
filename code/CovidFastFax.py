@@ -53,7 +53,7 @@ class CovidFastFax(object):
         self.split_pdfs = split_pdfs
 
         self.email_out = email_alerts
-        self.email_ping_rate = 20
+        self.email_ping_rate = 30
         self.email_time_tracker = 0.0
         if self.verbose:
             print(f"email setting: {self.email_out}")
@@ -211,7 +211,11 @@ class CovidFastFax(object):
             if self.verbose:
                 print(f"Analyzing {os.path.basename(file_path)}...")
             start = time.time()
-            self.process_pdf(file_path)
+            try:
+                self.process_pdf(file_path)
+            except:
+                self.email_ping(60)
+                self.email_ping(60)
             end = time.time()
             
             time_elapsed = ((end - start)/60)
