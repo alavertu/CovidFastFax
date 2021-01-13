@@ -146,11 +146,11 @@ class CovidFastFax(object):
         # Need to update checkbox coordinates
 
         # Load models into ensemble predictor
-        model1 = load_model("../data/chkbox_models/chkbox_rnd11_0_bestVal.pt")
-        model2 = load_model("../data/chkbox_models/chkbox_rnd11_1_bestVal.pt")
-        model3 = load_model("../data/chkbox_models/chkbox_rnd11_2_bestVal.pt")
-        model4 = load_model("../data/chkbox_models/chkbox_rnd11_3_bestVal.pt")
-        model5 = load_model("../data/chkbox_models/chkbox_rnd11_4_bestVal.pt")
+        model1 = load_model("../data/chkbox_models/chkbox_rnd13_0_bestVal.pt")
+        model2 = load_model("../data/chkbox_models/chkbox_rnd13_1_bestVal.pt")
+        model3 = load_model("../data/chkbox_models/chkbox_rnd13_2_bestVal.pt")
+        model4 = load_model("../data/chkbox_models/chkbox_rnd13_3_bestVal.pt")
+        model5 = load_model("../data/chkbox_models/chkbox_rnd13_4_bestVal.pt")
 
         _ = model1.to(self.device)
         _ = model2.to(self.device)
