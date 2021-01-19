@@ -114,6 +114,8 @@ class CovidFastFax(object):
         ## SETUP FOR FORM CLASSIFICATION
         self.template_classifiers = []
         for model_path in glob(os.path.join("../data/form_model/base_models/", "*.pt")):
+            if self.verbose:
+                print(f"loading form model {len(self.template_classifiers)}: {model_path}")
             self.template_classifiers.append(self.load_template_model(model_path))
 
         if model_module is not None:
@@ -211,11 +213,10 @@ class CovidFastFax(object):
             if self.verbose:
                 print(f"Analyzing {os.path.basename(file_path)}...")
             start = time.time()
-            try:
-                self.process_pdf(file_path)
-            except:
-                self.email_ping(60)
-                self.email_ping(60)
+            self.process_pdf(file_path)
+            # except:
+            #     self.email_ping(60)
+            #     self.email_ping(60)
             end = time.time()
             
             time_elapsed = ((end - start)/60)
@@ -249,7 +250,7 @@ class CovidFastFax(object):
             _ = base_image.save(out_path, "PDF", resolution=100.0, save_all=True)
 
     def get_report_priority(self, temp_im, form_template):
-        if len(form_template.template_checkboxes) > 0:
+        if form_template.has_checkboxes:
             checkbox_preds = form_template.process_chkboxes(
                 self.device, self.chk_transf, self.ens_model, temp_im
             )
@@ -390,7 +391,7 @@ class CovidFastFax(object):
     def generate_output(self, file_path, f_baseroot, og_image_stack, hit_form_info):
 
         if self.debug_mode:
-            print(hit_form_info)
+            print("Hit form info:", hit_form_info)
 
         jmi_mode = "jm_v1" in {x[1] for x in hit_form_info}
 
@@ -415,7 +416,8 @@ class CovidFastFax(object):
                     print(
                         f"Splitting {file_path} into {len(hit_form_info)} separate report files"
                     )
-
+                if self.debug_mode:
+                    print("path 1")
                 lead_page = (len(og_image_stack) - 1) == len(hit_form_info) * 3
 
                 for index, (
@@ -462,7 +464,8 @@ class CovidFastFax(object):
                     print(
                         f"Splitting {file_path} into {len(hit_form_info)} separate report files"
                     )
-
+                if self.debug_mode:
+                    print("path 2")
                 lead_page = (len(og_image_stack) - 1) == len(hit_form_info)
 
                 for index, (
@@ -503,6 +506,8 @@ class CovidFastFax(object):
                 if self.verbose:
                     print(f"{file_path} contained {len(hit_form_info)} reports...")
                 # Assign page specific labels
+                if self.debug_mode:
+                    print("path 3")
 
                 report_pages = []
                 prefixes = []
@@ -533,6 +538,9 @@ class CovidFastFax(object):
         if og_im_stack is not None:
             pred_labels = self.get_form_template_classifications(proc_im_stack)
             hit_form_info = self.get_form_data(pred_labels, og_im_stack)
+            if self.debug_mode:
+                print("passing hit form info")
+                print("hit_form_info:", hit_form_info)
             self.generate_output(file_path, f_baseroot, og_im_stack, hit_form_info)
 
 

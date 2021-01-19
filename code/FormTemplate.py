@@ -58,12 +58,14 @@ class FormTemplate(object):
         output_spec = sorted([(k, v) for k, v in output_spec.items()])
 
         self.output_specs = list()
+        self.has_checkboxes = False
         self.checkbox_labels = dict()
 
         checkboxes_not_defined = True
 
         for prefix, rules in output_spec:
             if 'checkbox_coords_file' in rules:
+                self.has_checkboxes = True
                 checkbox_coords = json.load(open(os.path.join(path_to_form_dir, rules['checkbox_coords_file']), "r"))
 
                 # Assign checkbox indices to prefix labels
@@ -78,6 +80,7 @@ class FormTemplate(object):
                     checkboxes_not_defined = False
             else:
                 checkbox_coords = None
+
 
             # If this form has an associated prefix, set that here
             if 'baseline_name' in rules:
