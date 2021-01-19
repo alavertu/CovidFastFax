@@ -115,7 +115,7 @@ class CovidFastFax(object):
         self.template_classifiers = []
         for model_path in glob(os.path.join("../data/form_model/base_models/", "*.pt")):
             if self.verbose:
-                print(f"loading form model {len(self.template_classifiers)}: {model_path}")
+                print(f"Loading form model {len(self.template_classifiers)}: {model_path}")
             self.template_classifiers.append(self.load_template_model(model_path))
 
         if model_module is not None:
