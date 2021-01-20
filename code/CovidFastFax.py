@@ -36,6 +36,8 @@ class CovidFastFax(object):
         split_pdfs=False,
         email_alerts=False,
     ):
+        import os
+        os.environ["LRU_CACHE_CAPACITY"] = "3"
 
         self.target_dir = target_dir
 
