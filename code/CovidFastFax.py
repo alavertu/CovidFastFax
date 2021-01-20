@@ -10,7 +10,6 @@ import shutil
 import warnings
 import sys
 
-
 warnings.simplefilter(action="ignore", category=FutureWarning)
 
 from skimage import img_as_float32
@@ -212,6 +211,8 @@ class CovidFastFax(object):
             self.email_ping(1)
             if self.verbose:
                 print(f"Monitoring {self.target_dir} for new files...")
+            if self.debug_mode:
+                break
 
     def process_file_list(self, to_process):
         for file_path in to_process:
@@ -294,21 +295,31 @@ class CovidFastFax(object):
 
     def get_form_template_classifications(self, proc_im_stack):
 
-        # Pass pages through template matcher to identify forms vs. labs etc...
-        proc_im_stack = torch.stack(proc_im_stack)
-        proc_im_stack = proc_im_stack.to(self.device)
+        with torch.no_grad():
+            # Pass pages through template matcher to identify forms vs. labs etc...
+            proc_im_stack = torch.stack(proc_im_stack)
 
-        pred_labels = [set() for _ in range(proc_im_stack.shape[0])]
-        for k, (model, pred_key) in enumerate(self.template_classifiers):
-            form_type_preds = model(proc_im_stack)
-            sf_preds = torch.nn.functional.softmax(form_type_preds, dim=1)
-            for j in range(sf_preds.shape[0]):
-                temp_labels = {
-                    pred_key.get(x) for x in np.where(sf_preds[j, :] > 0.5)[0] if x != 0
-                }
-                pred_labels[j].update(temp_labels)
-                if self.debug_mode:
-                    print(f"Model {k}: ", [round(x.item(), 2) for x in sf_preds[j, :]])
+
+            pred_labels = [set() for _ in range(proc_im_stack.shape[0])]
+            for k, (model, pred_key) in enumerate(self.template_classifiers):
+
+                # Split large PDFs into multiple processing batches to avoid high memory consumption
+                out_preds = []
+                batch_size = 10
+                for step in range((proc_im_stack.shape[0]//batch_size)+1):
+                    temp_in = proc_im_stack[step*batch_size:((step+1)*batch_size), :, :]
+                    form_type_preds = model(temp_in)
+                    out_preds.append(torch.nn.functional.softmax(form_type_preds, dim=1))
+
+                sf_preds = torch.cat(out_preds)
+                assert sf_preds.shape[0] == proc_im_stack.shape[0]
+                for j in range(sf_preds.shape[0]):
+                    temp_labels = {
+                        pred_key.get(x) for x in np.where(sf_preds[j, :] > 0.5)[0] if x != 0
+                    }
+                    pred_labels[j].update(temp_labels)
+                    # if self.debug_mode:
+                    #     print(f"Model {k}: ", [round(x.item(), 2) for x in sf_preds[j, :]])
 
         return pred_labels
 
@@ -537,9 +548,6 @@ class CovidFastFax(object):
         if og_im_stack is not None:
             pred_labels = self.get_form_template_classifications(proc_im_stack)
             hit_form_info = self.get_form_data(pred_labels, og_im_stack)
-            if self.debug_mode:
-                print("passing hit form info")
-                print("hit_form_info:", hit_form_info)
             self.generate_output(file_path, f_baseroot, og_im_stack, hit_form_info)
 
 
