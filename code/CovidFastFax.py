@@ -3,13 +3,14 @@ CovidFastFax.py
 Written by Adam Lavertu
 Stanford University
 """
-
+import os
 import argparse
 import requests
 import time
 import shutil
 import warnings
 import sys
+
 
 warnings.simplefilter(action="ignore", category=FutureWarning)
 
@@ -36,7 +37,7 @@ class CovidFastFax(object):
         split_pdfs=False,
         email_alerts=False,
     ):
-        import os
+
         os.environ["LRU_CACHE_CAPACITY"] = "3"
 
         self.target_dir = target_dir
@@ -117,7 +118,9 @@ class CovidFastFax(object):
         self.template_classifiers = []
         for model_path in glob(os.path.join("../data/form_model/base_models/", "*.pt")):
             if self.verbose:
-                print(f"Loading form model {len(self.template_classifiers)}: {model_path}")
+                print(
+                    f"Loading form model {len(self.template_classifiers)}: {model_path}"
+                )
             self.template_classifiers.append(self.load_template_model(model_path))
 
         if model_module is not None:
@@ -174,16 +177,19 @@ class CovidFastFax(object):
             )
 
     def load_template_model(self, path_2_model):
-        model_pred_key = {int(k):v for k,v in json.load(open(os.path.join(os.path.dirname(path_2_model), "model_pred_key.json"))).items()}
+        model_pred_key = {
+            int(k): v
+            for k, v in json.load(
+                open(os.path.join(os.path.dirname(path_2_model), "model_pred_key.json"))
+            ).items()
+        }
         template_model = TemplateNet(num_classes=len(model_pred_key))
         template_model.load_state_dict(
-            torch.load(
-                path_2_model, map_location=torch.device("cpu")
-            )
+            torch.load(path_2_model, map_location=torch.device("cpu"))
         )
         _ = template_model.to(self.device)
         _ = template_model.eval()
-        return([template_model, model_pred_key])
+        return [template_model, model_pred_key]
 
     def email_ping(self, time_elapsed):
 
@@ -220,8 +226,8 @@ class CovidFastFax(object):
             #     self.email_ping(60)
             #     self.email_ping(60)
             end = time.time()
-            
-            time_elapsed = ((end - start)/60)
+
+            time_elapsed = (end - start) / 60
             if self.verbose:
                 print(f"Processing time: {round(time_elapsed*60, 2)} seconds")
 
@@ -301,9 +307,7 @@ class CovidFastFax(object):
             sf_preds = torch.nn.functional.softmax(form_type_preds, dim=1)
             for j in range(sf_preds.shape[0]):
                 temp_labels = {
-                    pred_key.get(x)
-                    for x in np.where(sf_preds[j, :] > 0.5)[0]
-                    if x != 0
+                    pred_key.get(x) for x in np.where(sf_preds[j, :] > 0.5)[0] if x != 0
                 }
                 pred_labels[j].update(temp_labels)
                 if self.debug_mode:
@@ -422,11 +426,9 @@ class CovidFastFax(object):
                     print("path 1")
                 lead_page = (len(og_image_stack) - 1) == len(hit_form_info) * 3
 
-                for index, (
-                    page_num,
-                    form_type,
-                    checkbox_status
-                ) in enumerate(hit_form_info):
+                for index, (page_num, form_type, checkbox_status) in enumerate(
+                    hit_form_info
+                ):
 
                     other_pages = []
 
@@ -450,9 +452,7 @@ class CovidFastFax(object):
                         check_hit_index = np.argmax(checkbox_status >= 1)
                         temp_name = f"{self.templates[form_type].checkbox_labels[check_hit_index]}_{f_baseroot}_{index+1}_of_{len(hit_form_info)}.pdf"
                     else:
-                        temp_name = (
-                            f"{self.templates[form_type].baseline_name}_{f_baseroot}_{index+1}_of_{len(hit_form_info)}.pdf"
-                        )
+                        temp_name = f"{self.templates[form_type].baseline_name}_{f_baseroot}_{index+1}_of_{len(hit_form_info)}.pdf"
                     regular_out = os.path.join(self.output_dir, temp_name)
                     self.save_to_pdf(
                         og_image_stack[(page_num - 1)], regular_out, other_pages
@@ -470,11 +470,9 @@ class CovidFastFax(object):
                     print("path 2")
                 lead_page = (len(og_image_stack) - 1) == len(hit_form_info)
 
-                for index, (
-                    page_num,
-                    form_type,
-                    checkbox_status
-                ) in enumerate(hit_form_info):
+                for index, (page_num, form_type, checkbox_status) in enumerate(
+                    hit_form_info
+                ):
                     if self.debug_mode:
                         print(page_num, form_type, checkbox_status)
 
@@ -497,9 +495,7 @@ class CovidFastFax(object):
                         temp_name = f"{self.templates[form_type].checkbox_labels[check_hit_index]}_{f_baseroot}_{index+1}_of_{len(hit_form_info)}.pdf"
 
                     else:
-                        temp_name = (
-                            f"{self.templates[form_type].baseline_name}_{f_baseroot}_{index+1}_of_{len(hit_form_info)}.pdf"
-                        )
+                        temp_name = f"{self.templates[form_type].baseline_name}_{f_baseroot}_{index+1}_of_{len(hit_form_info)}.pdf"
 
                     regular_out = os.path.join(self.output_dir, temp_name)
                     self.save_to_pdf(og_image_stack[page_num], regular_out, other_pages)
@@ -518,8 +514,12 @@ class CovidFastFax(object):
                         check_hit_index = np.argmax(checkbox_status >= 1)
 
                         # Use first letter of output name as page prefix
-                        prefix = self.templates[form_type].checkbox_labels[check_hit_index]
-                        prefixes.append(self.templates[form_type].checkbox_labels[check_hit_index])
+                        prefix = self.templates[form_type].checkbox_labels[
+                            check_hit_index
+                        ]
+                        prefixes.append(
+                            self.templates[form_type].checkbox_labels[check_hit_index]
+                        )
 
                         p_label = prefix.split("_")[1][0]
                         report_pages.append(p_label + str(page + 1))
@@ -568,7 +568,7 @@ def parse_command_line():
     parser.add_argument(
         "-m",
         "--model_module",
-        help="Path to directory containing additional template detection models (for expanding to new templates)"
+        help="Path to directory containing additional template detection models (for expanding to new templates)",
     )
     parser.add_argument(
         "-r",

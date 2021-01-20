@@ -51,7 +51,10 @@ class FormTemplate(object):
         ] = 1.0
 
         output_spec = json.load(
-            open(glob(os.path.join(path_to_form_dir, "reference_priorities.json"))[0], "r")
+            open(
+                glob(os.path.join(path_to_form_dir, "reference_priorities.json"))[0],
+                "r",
+            )
         )
 
         # Arrange prefixes in order of priority
@@ -64,9 +67,14 @@ class FormTemplate(object):
         checkboxes_not_defined = True
 
         for prefix, rules in output_spec:
-            if 'checkbox_coords_file' in rules:
+            if "checkbox_coords_file" in rules:
                 self.has_checkboxes = True
-                checkbox_coords = json.load(open(os.path.join(path_to_form_dir, rules['checkbox_coords_file']), "r"))
+                checkbox_coords = json.load(
+                    open(
+                        os.path.join(path_to_form_dir, rules["checkbox_coords_file"]),
+                        "r",
+                    )
+                )
 
                 # Assign checkbox indices to prefix labels
                 start_index = len(self.checkbox_labels)
@@ -81,10 +89,9 @@ class FormTemplate(object):
             else:
                 checkbox_coords = None
 
-
             # If this form has an associated prefix, set that here
-            if 'baseline_name' in rules:
-                if rules['baseline_name']:
+            if "baseline_name" in rules:
+                if rules["baseline_name"]:
                     self.baseline_name = prefix
 
             self.output_specs.append([prefix, checkbox_coords])
@@ -276,7 +283,15 @@ class FormTemplate(object):
                     ]
 
                     out_checkboxes.append(
-                        [xmi, xma, ymi, yma, bigger_self, smaller_template, smaller_template2]
+                        [
+                            xmi,
+                            xma,
+                            ymi,
+                            yma,
+                            bigger_self,
+                            smaller_template,
+                            smaller_template2,
+                        ]
                     )
 
         return out_checkboxes
@@ -384,4 +399,4 @@ class FormTemplate(object):
 
         binary_preds_count = ((preds >= opt_thres).sum(dim=1) >= 1).tolist()
 
-        return(binary_preds_count)
+        return binary_preds_count
