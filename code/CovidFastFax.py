@@ -3,7 +3,6 @@ CovidFastFax.py
 Written by Adam Lavertu
 Stanford University
 """
-import os
 import argparse
 import requests
 import time
@@ -37,8 +36,6 @@ class CovidFastFax(object):
         split_pdfs=False,
         email_alerts=False,
     ):
-
-        os.environ["LRU_CACHE_CAPACITY"] = "3"
 
         self.target_dir = target_dir
 
