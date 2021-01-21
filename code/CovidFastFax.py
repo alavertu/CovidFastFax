@@ -296,7 +296,6 @@ class CovidFastFax(object):
             temp_im = img_as_float32(temp_im)
             im_in = self.form_transf(temp_im)
             proc_im_stack.append(im_in)
-
         return [og_im_stack, proc_im_stack]
 
     def get_form_template_classifications(self, proc_im_stack):
@@ -305,15 +304,14 @@ class CovidFastFax(object):
             # Pass pages through template matcher to identify forms vs. labs etc...
             proc_im_stack = torch.stack(proc_im_stack)
 
-
             pred_labels = [set() for _ in range(proc_im_stack.shape[0])]
             for k, (model, pred_key) in enumerate(self.template_classifiers):
 
                 # Split large PDFs into multiple processing batches to avoid high memory consumption
                 out_preds = []
                 batch_size = 10
-                for step in range((proc_im_stack.shape[0]//batch_size)+1):
-                    temp_in = proc_im_stack[step*batch_size:((step+1)*batch_size), :, :]
+                for step in range(0, proc_im_stack.shape[0], batch_size):
+                    temp_in = proc_im_stack[step:(step+10), :, :]
                     form_type_preds = model(temp_in)
                     out_preds.append(torch.nn.functional.softmax(form_type_preds, dim=1))
 
@@ -546,7 +544,7 @@ class CovidFastFax(object):
 
                 highest_pr_prefix = sorted(prefixes)[0]
                 print(f"This report had {len(report_pages)} pages.")
-                
+
                 if len(report_pages) > 10:
 
                     temp_name = f"{highest_pr_prefix}_{f_baseroot}_{len(hit_form_info)}_samples.pdf"
