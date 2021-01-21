@@ -276,7 +276,7 @@ class CovidFastFax(object):
                 info = pdfinfo_from_path(file_path)
                 maxPages = info["Pages"]
                 for page in range(1, maxPages + 1, 10):
-                    images += convert_from_path(file_path, dpi=200, first_page=page, last_page=min(page + 10 - 1, maxPages))
+                    images += convert_from_path(file_path, first_page=page, last_page=min(page + 10 - 1, maxPages), size=(1100,850))
             else:
                 self.skipped.write(file_path + "\n")
                 return [None, None]
@@ -523,6 +523,7 @@ class CovidFastFax(object):
 
                 report_pages = []
                 prefixes = []
+
                 for page, form_type, checkbox_status in hit_form_info:
                     if any(checkbox_status >= 1):
                         check_hit_index = np.argmax(checkbox_status >= 1)
@@ -544,8 +545,10 @@ class CovidFastFax(object):
                 report_pages = "-".join(report_pages)
 
                 highest_pr_prefix = sorted(prefixes)[0]
-
+                print(f"This report had {len(report_pages)} pages.")
+                
                 if len(report_pages) > 10:
+
                     temp_name = f"{highest_pr_prefix}_{f_baseroot}_{len(hit_form_info)}_samples.pdf"
                 else:
                     temp_name = f"{highest_pr_prefix}_{f_baseroot}_{len(hit_form_info)}_samples_pgs_{report_pages}.pdf"
